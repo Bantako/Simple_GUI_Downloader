@@ -2,10 +2,12 @@
 
 # シンプルなGUIダウンローダ（zenityとaria2cを使用）
 
-# URLとファイル名を一度に入力
+# ダウンロード情報を入力
 FORM=$(zenity --forms --title="ダウンローダ" --text="ダウンロード情報を入力" --width=400 \
     --add-entry="ダウンロードURL" \
-    --add-entry="保存ファイル名")
+    --add-entry="保存ファイル名" \
+    --add-combo="保存先ディレクトリ" \
+    --combo-values="デスクトップ|ダウンロード|ドキュメント|その他")
 
 # キャンセルされた場合は終了
 if [ -z "$FORM" ]; then
@@ -15,13 +17,37 @@ fi
 # フォームの結果を分割
 URL=$(echo "$FORM" | awk -F'|' '{print $1}')
 FILENAME=$(echo "$FORM" | awk -F'|' '{print $2}')
+SELECTED=$(echo "$FORM" | awk -F'|' '{print $3}')
 
-# aria2cでダウンロード実行
-aria2c -o "$FILENAME" "$URL"
+# 選択に応じてディレクトリを設定
+case "$SELECTED" in
+    "デスクトップ")
+        DOWNLOAD_DIR="$HOME/Desktop"
+        ;;
+    "ダウンロード")
+        DOWNLOAD_DIR="$HOME/Downloads"
+        ;;
+    "ドキュメント")
+        DOWNLOAD_DIR="$HOME/Documents"
+        ;;
+    "その他")
+        DOWNLOAD_DIR=$(zenity --file-selection --title="ダウンロード先ディレクトリを選択" --directory)
+        if [ -z "$DOWNLOAD_DIR" ]; then
+            exit 0
+        fi
+        ;;
+    *)
+        zenity --error --title="エラー" --text="無効な選択です" --width=400
+        exit 1
+        ;;
+esac
+
+# aria2cでダウンロード実行（指定ディレクトリに保存）
+aria2c -d "$DOWNLOAD_DIR" -o "$FILENAME" "$URL"
 
 # ダウンロード結果を表示
 if [ $? -eq 0 ]; then
-    zenity --info --title="ダウンロード完了" --text="ダウンロードが完了しました\nファイル名: $FILENAME" --width=400
+    zenity --info --title="ダウンロード完了" --text="ダウンロードが完了しました\n保存先: $DOWNLOAD_DIR\nファイル名: $FILENAME" --width=400
 else
     zenity --error --title="ダウンロード失敗" --text="ダウンロードに失敗しました" --width=400
 fi
