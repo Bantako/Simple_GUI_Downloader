@@ -49,5 +49,6 @@ aria2c -d "$DOWNLOAD_DIR" -o "$FILENAME" -x 16 -s 16 "$URL"
 if [ $? -eq 0 ]; then
     zenity --info --title="ダウンロード完了" --text="ダウンロードが完了しました\n保存先: $DOWNLOAD_DIR\nファイル名: $FILENAME" --width=400
 else
-    zenity --error --title="ダウンロード失敗" --text="ダウンロードに失敗しました" --width=400
+    ERROR_LOG=$(aria2c -d "$DOWNLOAD_DIR" -o "$FILENAME" -x 16 -s 16 "$URL" 2>&1)
+    zenity --error --title="ダウンロード失敗" --text="ダウンロードに失敗しました\n\nURL: $URL\n保存先: $DOWNLOAD_DIR\nエラー内容:\n$ERROR_LOG" --width=500
 fi
