@@ -24,6 +24,11 @@ fi
 # フォームの結果を分割
 IFS='|' read -r URL FILENAME SELECTED ENABLE_RETRY <<< "$FORM"
 
+# ファイル名が空白の場合、日時をファイル名にする
+if [ -z "$FILENAME" ]; then
+    FILENAME="download_$(date +'%Y%m%d_%H%M%S')"
+fi
+
 # リトライ設定
 MAX_RETRIES=5
 RETRY_WAIT=10
