@@ -61,7 +61,9 @@ fi
 
 # ダウンロード結果を表示
 if [ $? -eq 0 ]; then
-    yad --info --title="ダウンロード完了" --text="ダウンロードが完了しました\n保存先: $DOWNLOAD_DIR\nファイル名: $FILENAME" --width=400
+    # 実際にダウンロードされたファイル名を取得
+    ACTUAL_FILENAME=$(ls "$DOWNLOAD_DIR" | grep -E "^$FILENAME(|\.\d+)$" | sort | tail -n 1)
+    yad --info --title="ダウンロード完了" --text="ダウンロードが完了しました\n保存先: $DOWNLOAD_DIR\nファイル名: $ACTUAL_FILENAME" --width=400
 else
     ERROR_LOG=$(aria2c -d "$DOWNLOAD_DIR" -o "$FILENAME" -x 16 -s 16 "$URL" 2>&1)
     yad --error --title="ダウンロード失敗" --text="ダウンロードに失敗しました\n\nURL: $URL\n保存先: $DOWNLOAD_DIR\nエラー内容:\n$ERROR_LOG" --width=500
