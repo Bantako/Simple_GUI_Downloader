@@ -16,7 +16,12 @@ fi
 URL=$(echo "$FORM" | awk -F'|' '{print $1}')
 FILENAME=$(echo "$FORM" | awk -F'|' '{print $2}')
 
-# ここにaria2cを使ったダウンロード処理を追加予定
+# aria2cでダウンロード実行
+aria2c -o "$FILENAME" "$URL"
 
-echo "URL: $URL"
-echo "ファイル名: $FILENAME"
+# ダウンロード結果を表示
+if [ $? -eq 0 ]; then
+    zenity --info --title="ダウンロード完了" --text="ダウンロードが完了しました\nファイル名: $FILENAME" --width=400
+else
+    zenity --error --title="ダウンロード失敗" --text="ダウンロードに失敗しました" --width=400
+fi
