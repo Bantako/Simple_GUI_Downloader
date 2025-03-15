@@ -22,13 +22,13 @@ SELECTED=$(echo "$FORM" | awk -F'|' '{print $3}')
 # 選択に応じてディレクトリを設定
 case "$SELECTED" in
     "デスクトップ")
-        DOWNLOAD_DIR="$HOME/Desktop"
+        DOWNLOAD_DIR=$(xdg-user-dir DESKTOP)
         ;;
     "ダウンロード")
-        DOWNLOAD_DIR="$HOME/Downloads"
+        DOWNLOAD_DIR=$(xdg-user-dir DOWNLOAD)
         ;;
     "ドキュメント")
-        DOWNLOAD_DIR="$HOME/Documents"
+        DOWNLOAD_DIR=$(xdg-user-dir DOCUMENTS)
         ;;
     "その他")
         DOWNLOAD_DIR=$(zenity --file-selection --title="ダウンロード先ディレクトリを選択" --directory)
