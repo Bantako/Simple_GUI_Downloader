@@ -2,12 +2,19 @@
 
 # シンプルなGUIダウンローダ（yadとaria2cを使用）
 
-# ダウンロード情報を入力
-FORM=$(yad --title="ダウンローダ" --text="ダウンロード情報を入力" --form --width=400 \
-    --field="ダウンロードURL" "" \
-    --field="保存ファイル名" "" \
-    --field="保存先ディレクトリ:CB" "ダウンロード!デスクトップ!ドキュメント!その他" \
-    --field="自動リトライを有効にする:CHK" TRUE)
+# テストモードかどうかを確認
+TEST_MODE=false
+if [ "$1" = "--test" ]; then
+    TEST_MODE=true
+    FORM="http://speedtest.tele2.net/10MB.zip|testfile.zip|ダウンロード|TRUE"
+else
+    # ダウンロード情報を入力
+    FORM=$(yad --title="ダウンローダ" --text="ダウンロード情報を入力" --form --width=400 \
+        --field="ダウンロードURL" "" \
+        --field="保存ファイル名" "" \
+        --field="保存先ディレクトリ:CB" "ダウンロード!デスクトップ!ドキュメント!その他" \
+        --field="自動リトライを有効にする:CHK" TRUE)
+fi
 
 # キャンセルされた場合は終了
 if [ -z "$FORM" ]; then
