@@ -42,8 +42,8 @@ case "$SELECTED" in
         ;;
 esac
 
-# aria2cでダウンロード実行（指定ディレクトリに保存）
-aria2c -d "$DOWNLOAD_DIR" -o "$FILENAME" "$URL"
+# aria2cで分割ダウンロード実行（指定ディレクトリに保存）
+aria2c -d "$DOWNLOAD_DIR" -o "$FILENAME" -x 16 -s 16 "$URL"
 
 # ダウンロード結果を表示
 if [ $? -eq 0 ]; then
