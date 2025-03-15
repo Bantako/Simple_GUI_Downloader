@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# シンプルなGUIダウンローダ（zenityとaria2cを使用）
+# シンプルなGUIダウンローダ（yadとaria2cを使用）
 
 # ダウンロード情報を入力
-FORM=$(zenity --forms --title="ダウンローダ" --text="ダウンロード情報を入力" --width=400 \
-    --add-entry="ダウンロードURL" \
-    --add-entry="保存ファイル名" \
-    --add-combo="保存先ディレクトリ" \
-    --combo-values="デスクトップ|ダウンロード|ドキュメント|その他")
+FORM=$(yad --title="ダウンローダ" --text="ダウンロード情報を入力" --form --width=400 \
+    --field="ダウンロードURL" "" \
+    --field="保存ファイル名" "" \
+    --field="保存先ディレクトリ:CB" "デスクトップ!ダウンロード!ドキュメント!その他" \
+    --field="自動リトライを有効にする:CHK" TRUE)
 
 # キャンセルされた場合は終了
 if [ -z "$FORM" ]; then
@@ -15,9 +15,11 @@ if [ -z "$FORM" ]; then
 fi
 
 # フォームの結果を分割
-URL=$(echo "$FORM" | awk -F'|' '{print $1}')
-FILENAME=$(echo "$FORM" | awk -F'|' '{print $2}')
-SELECTED=$(echo "$FORM" | awk -F'|' '{print $3}')
+IFS='|' read -r URL FILENAME SELECTED ENABLE_RETRY <<< "$FORM"
+
+# リトライ設定
+MAX_RETRIES=5
+RETRY_WAIT=10
 
 # 選択に応じてディレクトリを設定
 case "$SELECTED" in
@@ -31,24 +33,29 @@ case "$SELECTED" in
         DOWNLOAD_DIR=$(xdg-user-dir DOCUMENTS)
         ;;
     "その他")
-        DOWNLOAD_DIR=$(zenity --file-selection --title="ダウンロード先ディレクトリを選択" --directory)
-        if [ -z "$DOWNLOAD_DIR" ]; then
+        DOWNLOAD_DIR=$(yad --file --title="ダウンロード先ディレクトリを選択" --directory --width=600 --height=400)
+        if [ $? -ne 0 ] || [ -z "$DOWNLOAD_DIR" ]; then
             exit 0
         fi
         ;;
     *)
-        zenity --error --title="エラー" --text="無効な選択です" --width=400
+    yad --error --title="エラー" --text="無効な選択です" --width=400
         exit 1
         ;;
 esac
 
 # aria2cで分割ダウンロード実行（指定ディレクトリに保存）
-aria2c -d "$DOWNLOAD_DIR" -o "$FILENAME" -x 16 -s 16 "$URL"
+# 最大5回までリトライ、リトライ間隔は10秒
+if [ "$ENABLE_RETRY" = "TRUE" ]; then
+    aria2c -d "$DOWNLOAD_DIR" -o "$FILENAME" -x 16 -s 16 --max-tries="$MAX_RETRIES" --retry-wait="$RETRY_WAIT" "$URL"
+else
+    aria2c -d "$DOWNLOAD_DIR" -o "$FILENAME" -x 16 -s 16 "$URL"
+fi
 
 # ダウンロード結果を表示
 if [ $? -eq 0 ]; then
-    zenity --info --title="ダウンロード完了" --text="ダウンロードが完了しました\n保存先: $DOWNLOAD_DIR\nファイル名: $FILENAME" --width=400
+    yad --info --title="ダウンロード完了" --text="ダウンロードが完了しました\n保存先: $DOWNLOAD_DIR\nファイル名: $FILENAME" --width=400
 else
     ERROR_LOG=$(aria2c -d "$DOWNLOAD_DIR" -o "$FILENAME" -x 16 -s 16 "$URL" 2>&1)
-    zenity --error --title="ダウンロード失敗" --text="ダウンロードに失敗しました\n\nURL: $URL\n保存先: $DOWNLOAD_DIR\nエラー内容:\n$ERROR_LOG" --width=500
+    yad --error --title="ダウンロード失敗" --text="ダウンロードに失敗しました\n\nURL: $URL\n保存先: $DOWNLOAD_DIR\nエラー内容:\n$ERROR_LOG" --width=500
 fi
